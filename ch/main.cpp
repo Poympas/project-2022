@@ -1,3 +1,4 @@
+
 // program includes
 #include <iostream>                 // std::cout
 #include <CGAL/Polygon_2.h>         // CGAL::Polygon_2<K>
