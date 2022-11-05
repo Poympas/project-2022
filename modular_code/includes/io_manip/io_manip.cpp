@@ -1,9 +1,22 @@
 #include "io_manip.hpp"
 
-// read input file from path and extract points and ch_area
+/*
+Reads points and convex hull area from path. Expected format of input is:
+    <line describing point set>
+    parameters "convex_hull": {"area": "x"} // where x is the ch area
+    0 x0 y0
+    1 x1 y1
+    ...
+    n-1 xn yn
+*/ 
 void io_manip::read_data(const std::string& path, Points& points, NUM& ch_area) {
     // open file to read
     std::ifstream input_file(path);
+    
+    if (!input_file.good()) {
+        std::cout<<"input file: "<<path<<" does not exist.\n";
+        exit(1);
+    }
 
     // read file line by line
     std::string line;
@@ -12,7 +25,12 @@ void io_manip::read_data(const std::string& path, Points& points, NUM& ch_area) 
     {
         // 2nd line has ch_area
         if (i==1) {
-            ch_area = stoi(line.substr(38,line.size()-2-38));
+            // convert read string to stringstream
+            std::stringstream convestsion_stream;
+            std::string ch_area_str = line.substr(38,line.size()-2-38);
+            convestsion_stream << ch_area_str;
+            // then convert the stringstream to NUM to handle greater values
+            convestsion_stream >> ch_area;
         }
         // starting from the 3d line
         else if (i>=2) {
@@ -27,8 +45,10 @@ void io_manip::read_data(const std::string& path, Points& points, NUM& ch_area) 
             // insert new point from vals[1] and vals[2] (vals[0] is an index)
             points.push_back(Point_2(stoi(vals[1]),stoi(vals[2])));
         }
+        // increase line counter number
         i++;
     }
 
+    // close read file
     input_file.close();
 }

@@ -1,4 +1,4 @@
-# Install script for directory: /home/users/sdi1800217/Code/Project/ass1/take8/includes/cgal_config
+# Install script for directory: /home/users/sdi1800217/Code/Project/ass1/take9/includes/cgal_config
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
