@@ -1,4 +1,3 @@
-
 // program includes
 #include <iostream>                 // std::cout
 #include <CGAL/Polygon_2.h>         // CGAL::Polygon_2<K>
@@ -53,20 +52,22 @@ void find_inner_points(const Points& points, const Point_container& CH, Points& 
 }
 
 // from a set of points find the one closest to the given edge
-Point_2 point_closest_to_edge(const Segment_2& e,const Points& points) {
-    Point_2 closest_point = points[0];
+void point_closest_to_edge(const Segment_2& e,const Points& points, Point_2& closest_point, int& closest_i) {
+    closest_point = points[0];
+    closest_i = 0;
     NUM min_distance = CGAL::squared_distance(e,points[0]); 
 
     // run through all points and find min distance and point
+    int i=0;
     for (const Point_2& p:points) {
         NUM distance = CGAL::squared_distance(e,p);
         if ( distance < min_distance ){
             min_distance = distance;
             closest_point=p;
+            closest_i=i;
         }
+        i++;
     }
-    
-    return closest_point;
 }
 
 // choose index of point - 0: random, 1: min area, 2: max area
@@ -245,24 +246,27 @@ int main() {
     // vis - save poly line
     if(vis) save_points_to_file(poly_line,vis_poly_line+std::to_string(vis_counter));
 
+    // initialise inner points
+    Points inner_points;
+    find_inner_points(points,poly_line,inner_points);
+    
     // inwards addition loop
     int max_reps = points.size()-poly_line.size();
-
     for (int reps=0; reps<max_reps; reps++) {
         if(reps%10==0) std::cout<<reps<<std::endl;
-        // find inner points
-        Points inner_points;
-        find_inner_points(points,poly_line,inner_points);
-
-        // for each edge find closest point, if it is visible and area of created triangle
-        Points closest_points;
-        std::vector<NUM> areas;
-        std::vector<bool> visibility;
+        // for each edge:
+        Points closest_points;              // find closest point
+        std::vector<NUM> areas;             // if it is visible
+        std::vector<bool> visibility;       // area of created triangle
+        std::vector<int> inner_points_i;    // index of closest point at inner_points
 
         for(const Segment_2& e : poly_line.edges()) {
             // closest point
-            Point_2 closest_point = point_closest_to_edge(e,inner_points);
+            Point_2 closest_point;
+            int inner_i;
+            point_closest_to_edge(e,inner_points,closest_point,inner_i);
             closest_points.push_back(closest_point);
+            inner_points_i.push_back(inner_i);
 
             // triangle area
             NUM area = Triangle_2(e.source(),e.target(),closest_point).area();
@@ -286,6 +290,9 @@ int main() {
 
         // update area
         poly_area-=areas[chosen_index];
+
+        // update inner_points, remove added point
+        inner_points.erase(inner_points.begin() + inner_points_i[chosen_index]);
 
         // vis - increase vis_counter and save new poly line
         if(vis) vis_counter++;
