@@ -20,6 +20,7 @@ typedef CGAL::Polygon_2<K> Polygon_2;
 
 // vectors and iterators
 typedef std::vector<Point_2> Points;
+typedef std::vector<Segment_2> Edges;
 
 
 // new stuff
@@ -30,50 +31,8 @@ typedef std::vector<Point_2> Points;
 //CORE::BigInt
 typedef int NUM;
 
-
-// CS = Choice Strategy
-enum CS { RANDOM, MIN, MAX };
-
-// find inner points = points - points on CH
-template <typename Point_container> // Points or Polygon_2
-void find_inner_points(const Points& points, const Point_container& CH, Points& inner_points) {
-    // for each point
-    for (const Point_2& p:points) {
-        bool check=true;
-        // check if it is equal to one of the point on the CH
-        for (const Point_2& p_ch:CH) {
-            if (p==p_ch) {
-                check=false;
-                break;
-            }
-        } 
-        // if not check remains one so add it to inner points
-        if (check)
-            inner_points.push_back(p);
-    }
-}
-
-// from a set of points find the one closest to the given edge
-void point_closest_to_edge(const Segment_2& e,const Points& points, Point_2& closest_point, int& closest_i) {
-    closest_point = points[0];
-    closest_i = 0;
-    NUM min_distance = CGAL::squared_distance(e,points[0]); 
-
-    // run through all points and find min distance and point
-    int i=0;
-    for (const Point_2& p:points) {
-        NUM distance = CGAL::squared_distance(e,p);
-        if ( distance < min_distance ){
-            min_distance = distance;
-            closest_point=p;
-            closest_i=i;
-        }
-        i++;
-    }
-}
-
 // choose index of point - 0: random, 1: min area, 2: max area
-int choose_index(const Points& points,const std::vector<bool>& visibility,const std::vector<NUM>& areas,CS cs){
+int choose_index(const std::vector<bool>& visibility,const std::vector<NUM>& areas,int& cs){
     // only choose from points that are visible from their respective edge
     std::vector<int> visible_indexes;
     std::vector<int> visible_areas;
@@ -88,14 +47,14 @@ int choose_index(const Points& points,const std::vector<bool>& visibility,const 
 
     int i;
     switch(cs) {
-        case CS::RANDOM: // random pick
+        case 1: // random pick
             std::srand(std::time(0));
             i = std::rand()%visible_indexes.size();
             break;
-        case CS::MIN: // min area
+        case 2: // min area
             i = std::distance(std::begin(visible_areas), std::min_element(std::begin(visible_areas), std::end(visible_areas)));
             break;
-        case CS::MAX: // max area
+        case 3: // max area
             i = std::distance(std::begin(visible_areas), std::max_element(std::begin(visible_areas), std::end(visible_areas)));
             break;
     }
@@ -147,17 +106,13 @@ void save_points_to_file(const Point_container& points, const std::string& path)
     outfile.close();
 }
 
-// save points to file at path - uses visibility
+// save points and visibility to file at path 
 template <typename Point_container> // Points or Polygon_2
-void save_points_to_file(const Point_container& points,const std::vector<bool>& visibility, const std::string& path){
+void save_points_and_vis_to_file(const Point_container& points, const std::vector<bool> visibility, const std::string& path){
     std::ofstream outfile(path);
 
-    for (int i=0; i<points.size(); i++){
-        if (visibility[i])
-            outfile << points[i] << std::endl;
-        else
-            outfile << "NOT_VISIBLE" << std::endl;
-    } 
+    for (int i=0;i<points.size();i++)
+        outfile << points[i] <<" "<<visibility[i]<< std::endl;
 
     outfile.close();
 }
@@ -218,102 +173,56 @@ bool is_visible_p_from_e(const Point_2& point, const Segment_2& edge, const Poly
     return true;
 }
 
-// insert new closest_point, area, visibility, inner_point_i of edge with index i
-void ch_to_poly_insert(const int& i,
-                       const Polygon_2& poly_line,   
-                       const Points& inner_points,
-                       Points& closest_points, 
-                       std::vector<NUM>& areas, 
-                       std::vector<bool>& visibility, 
-                       std::vector<int>& inner_points_i 
-                     ){
-    Segment_2 e = *(poly_line.edges_begin()+i);
-
-    // closest point
-    Point_2 closest_point;
-    int inner_i;
-    point_closest_to_edge(e,inner_points,closest_point,inner_i);
-    closest_points.insert(closest_points.begin()+i,closest_point);
-    inner_points_i.insert(inner_points_i.begin()+i,inner_i);
-
-    // triangle area
-    NUM area = Triangle_2(e.source(),e.target(),closest_point).area();
-    areas.insert(areas.begin()+i,area);
-
-    // visibility check
-    visibility.insert(visibility.begin()+i,is_visible_p_from_e(closest_point,e,poly_line));
-}
-
-// update closest_point, area, visibility, inner_point_i of edge with index i
-void ch_to_poly_update(const int& i,
-                       const Polygon_2& poly_line,   
-                       const Points& inner_points,
-                       Points& closest_points, 
-                       std::vector<NUM>& areas, 
-                       std::vector<bool>& visibility, 
-                       std::vector<int>& inner_points_i 
-                     ){
-    Segment_2 e = *(poly_line.edges_begin()+i);
-
-    // closest point
-    Point_2 closest_point;
-    int inner_i;
-    point_closest_to_edge(e,inner_points,closest_point,inner_i);
-    closest_points[i]=closest_point;
-    inner_points_i[i]=inner_i;
-
-    // triangle area
-    NUM area = Triangle_2(e.source(),e.target(),closest_point).area();
-    areas[i]=area;
-
-    // visibility check
-    visibility[i]=is_visible_p_from_e(closest_point,e,poly_line);
-}
-
 // compare on y
 struct YCopmare {
     bool operator() (Point_2 p1, Point_2 p2) { return (p1.y() < p2.y());}
 } yCompare;
 
+bool vis; // visualisation
+bool vis_min; // minimal visualisation, points and final poly line
 
-
-bool vis=true; // visualisation
-bool vis_min=false; // minimal visualisation, points and final poly line
+int edge_selection; // 1,2,3 -> random, min, max
 
 // vis - paths for saving
 int vis_counter=0;
 std::string vis_points="visualisation/points";
 std::string vis_ch="visualisation/ch_";
 std::string vis_visible="visualisation/visible_";
+std::string vis_poly_line="visualisation/poly_line_";
+std::string vis_visible_poly="visualisation/visible_poly_";
 
 // step of ch_bb
-void bb_step(const Point_2& next_point,Polygon_2& ch_bb,int& last_point_i){
+void bb_inc_step(const Point_2& next_point,
+                 Polygon_2& ch_bb,
+                 Polygon_2& poly_line,
+                 int& last_point_i,
+                 NUM& poly_area){
     // get size of ch_bb
     int size=ch_bb.size();
     // get last point from given index
     Point_2 last_point=ch_bb[last_point_i];
     
+    // check points turning right
     int right_i=last_point_i;
     Segment_2 right_edge(ch_bb[right_i],ch_bb[(right_i+1)%size]);
     
-    // check points turning right
     while (is_visible_p_from_e(next_point,right_edge,ch_bb)){
         //draw_edge(right_edge)
         right_i=(right_i+1)%size;
         right_edge=Segment_2(ch_bb[right_i],ch_bb[(right_i+1)%size]);
     }
 
+    // check points turning left
     int left_i=last_point_i;
     Segment_2 left_edge(ch_bb[(left_i-1)%size],ch_bb[left_i]);
 
-    // check points turning left
     while (is_visible_p_from_e(next_point,left_edge,ch_bb)){
         //draw_edge(left_edge)
         left_i=(left_i-1)%size;
         left_edge=Segment_2(ch_bb[(left_i-1)%size],ch_bb[left_i]);
     }
 
-    // vis - save visible points
+    // vis - save visible points on ch
     if(vis) {
         int visible_points_count=right_i-left_i+1;
         Points visible_points;
@@ -324,7 +233,60 @@ void bb_step(const Point_2& next_point,Polygon_2& ch_bb,int& last_point_i){
         save_points_to_file(visible_points,vis_visible+std::to_string(vis_counter));
     }
 
-    // remove points
+    // find the "red" edges on the poly line and update poly_line
+    /////////////////////////////////////////////////////////////////////////////////
+    
+    // first find index of point at poly_line that is equal to ch_bb[left_i]
+    int poly_left_i;
+    for (int i=0; i<poly_line.size(); i++)
+        if (ch_bb[left_i] == poly_line[i]) {
+            poly_left_i=i;
+            break;
+        }
+
+    // traverse poly line until the point equal to ch_bb[right_i] and save edges
+    Edges edges;
+    int poly_i=poly_left_i;
+    do {
+        int next_poly_i=(poly_i+1)%poly_line.size();
+        Segment_2 edge(poly_line[poly_i],poly_line[next_poly_i]);
+        edges.push_back(edge);
+        poly_i=next_poly_i;
+    } while (poly_line[poly_i] != ch_bb[right_i]);
+
+    // check which edges are visible from next_point and calculate area
+    std::vector<bool> visibility;
+    std::vector<NUM> areas;
+
+    for(const Segment_2& edge:edges) {
+        NUM area = CGAL::abs(Triangle_2(edge.source(),edge.target(),next_point).area());
+        areas.push_back(area);
+        visibility.push_back(is_visible_p_from_e(next_point,edge,poly_line));
+    }
+
+    // choose next index to insert - edge_selection = 1,2,3 -> random, min, max
+    int chosen_index=choose_index(visibility,areas,edge_selection);
+
+    // find acctual index on poly_line
+    int poly_index=(poly_left_i+chosen_index)%poly_line.size();
+
+    // insert next point in poly_line
+    if (poly_line.vertices_begin()+poly_index == poly_line.vertices_end()) 
+        poly_line.push_back(next_point);
+    else
+        poly_line.insert(poly_line.vertices_begin()+poly_index+1,next_point);
+    
+    // update area
+    poly_area+=areas[chosen_index];
+    
+    // vis - save visible edges on poly line
+    if(vis) save_points_and_vis_to_file(edges,visibility,vis_visible_poly+std::to_string(vis_counter));
+
+    /////////////////////////////////////////////////////////////////////////////////
+
+    // continue with ch_bb
+
+    // remove points from ch
     int remove_count=right_i-left_i-1;
     int index;
     for(int reps=0;reps<remove_count;reps++) {
@@ -332,30 +294,34 @@ void bb_step(const Point_2& next_point,Polygon_2& ch_bb,int& last_point_i){
         ch_bb.erase(ch_bb.begin()+index);
     }
 
-    //  and add new point
+    // and add new point to ch
     index=(left_i+1)%ch_bb.size(); 
     ch_bb.insert(ch_bb.begin()+index,next_point);
 
     // vis - increase vis_counter and save new ch
     if(vis) vis_counter++;
     if(vis) save_points_to_file(ch_bb,vis_ch+std::to_string(vis_counter));
+    if(vis) save_points_to_file(poly_line,vis_poly_line+std::to_string(vis_counter));
 
-    // set last_point_i as the index where the last point was inserted
+    // set last_point_i as the index where the last point was inserted at ch
     last_point_i=index;
 }
 
 int main() {
     
     // should be input
-    std::string path="euro-night-0000050.instance";
-    int edge_selection = 1;  // 1,2,3 -> random, min, max
-    int initialization = 4;  // 1,2,3,4 -> sort x, srot x reverse, sort y, sort y reverse
+    std::string path="euro-night-0000100.instance";
+    vis=true; // visualisation
+    vis_min=false; // minimal visualisation, points and final poly line
+    edge_selection = 3;  // 1,2,3 -> random, min, max
+    int initialization = 3;  // 1,2,3,4 -> sort x, srot x reverse, sort y, sort y reverse
 
     // read data from path
     Points rest_of_points;
+    NUM ch_area;
     NUM poly_area;
 
-    read_data(path,rest_of_points,poly_area);
+    read_data(path,rest_of_points,ch_area);
 
     // initialise point by sorting
     if (initialization==1 || initialization==2){
@@ -381,8 +347,12 @@ int main() {
         rest_of_points.erase(rest_of_points.begin());
     }
 
+    // calculate area of first triangle
+    poly_area = CGAL::abs(poly_line.area());
+
     // vis - save ch_bb
     if(vis) save_points_to_file(ch_bb,vis_ch+std::to_string(vis_counter));
+    if(vis) save_points_to_file(poly_line,vis_poly_line+std::to_string(vis_counter));
 
     // index of last inserted point
     int last_point_i=2;
@@ -391,11 +361,22 @@ int main() {
     int max_reps = rest_of_points.size();
     for (int reps=0; reps<max_reps; reps++) {
         Point_2 next_point = rest_of_points[0];      
-        bb_step(next_point,ch_bb,last_point_i);
+
+        bb_inc_step(next_point,
+                    ch_bb,
+                    poly_line,
+                    last_point_i,
+                    poly_area);
+
         rest_of_points.erase(rest_of_points.begin());
     }
 
+    std::cout<<poly_line.is_simple()<<" "<<poly_line.size()<<std::endl;
+    std::cout<<std::fixed<<CGAL::abs(poly_line.area())<<" "<<poly_area<<std::endl;
+
+    // vis - save final poly_line and ch
     if(vis_min) save_points_to_file(ch_bb,vis_ch);
+    if(vis_min) save_points_to_file(poly_line,vis_poly_line);
 }
 
 
