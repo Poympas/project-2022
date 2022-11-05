@@ -5,19 +5,19 @@
 This header file contains an implementation of the incremental algorithm as discussed
 in class. 
 
-At each step we add a point, calculate the ch_bb (beneath beyond convex hull),
-find the red edges from the the previous ch_bb and poly line, pick an edge based on 
-an edge selection strategy and the point to the poly line based on the chosen edge.
+    At each step we add a point, calculate the ch_bb (beneath beyond convex hull),
+    find the red edges from the the previous ch_bb and poly line, pick an edge based on 
+    an edge selection strategy and the point to the poly line based on the chosen edge.
 
-Two visualisation options are provided:
-    - full: at each step we save the points of the ch, the visible points on the ch,
-      the points on the poly line and the visible points on the poly line in separate files
-    - minimal: save only point set and final poly line.
+    Two visualisation options are provided:
+        - full: at each step we save the points of the ch, the visible points on the ch,
+        the points on the poly line and the visible points on the poly line in separate files
+        - minimal: save only point set and final poly line.
 
 The files created can then be used on our Python visualisation app where we can see
 the algorithm run step by step.
 
-Whenver "vis - ..." is used the code described concerns visualisation.
+Whenever "vis - ..." is used the code described concerns visualisation.
 */
 
 #include "../cgal_config/cgal_config.hpp" // CGAL types

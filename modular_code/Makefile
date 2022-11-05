@@ -48,10 +48,10 @@ RM = /usr/bin/cmake -E remove -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/users/sdi1800217/Code/Project/ass1/take8
+CMAKE_SOURCE_DIR = /home/users/sdi1800217/Code/Project/ass1/take10
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/users/sdi1800217/Code/Project/ass1/take8
+CMAKE_BINARY_DIR = /home/users/sdi1800217/Code/Project/ass1/take10
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -80,9 +80,9 @@ edit_cache/fast: edit_cache
 
 # The main all target
 all: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/users/sdi1800217/Code/Project/ass1/take8/CMakeFiles /home/users/sdi1800217/Code/Project/ass1/take8/CMakeFiles/progress.marks
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/users/sdi1800217/Code/Project/ass1/take10/CMakeFiles /home/users/sdi1800217/Code/Project/ass1/take10/CMakeFiles/progress.marks
 	$(MAKE) -f CMakeFiles/Makefile2 all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/users/sdi1800217/Code/Project/ass1/take8/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/users/sdi1800217/Code/Project/ass1/take10/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
@@ -175,6 +175,58 @@ poly_incremental/fast:
 	$(MAKE) -f includes/poly_incremental/CMakeFiles/poly_incremental.dir/build.make includes/poly_incremental/CMakeFiles/poly_incremental.dir/build
 .PHONY : poly_incremental/fast
 
+#=============================================================================
+# Target rules for targets named poly_from_ch
+
+# Build rule for target.
+poly_from_ch: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 poly_from_ch
+.PHONY : poly_from_ch
+
+# fast build rule for target.
+poly_from_ch/fast:
+	$(MAKE) -f includes/poly_from_ch/CMakeFiles/poly_from_ch.dir/build.make includes/poly_from_ch/CMakeFiles/poly_from_ch.dir/build
+.PHONY : poly_from_ch/fast
+
+#=============================================================================
+# Target rules for targets named poly_line_algorithms
+
+# Build rule for target.
+poly_line_algorithms: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 poly_line_algorithms
+.PHONY : poly_line_algorithms
+
+# fast build rule for target.
+poly_line_algorithms/fast:
+	$(MAKE) -f includes/poly_line_algorithms/CMakeFiles/poly_line_algorithms.dir/build.make includes/poly_line_algorithms/CMakeFiles/poly_line_algorithms.dir/build
+.PHONY : poly_line_algorithms/fast
+
+#=============================================================================
+# Target rules for targets named poly_onion
+
+# Build rule for target.
+poly_onion: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 poly_onion
+.PHONY : poly_onion
+
+# fast build rule for target.
+poly_onion/fast:
+	$(MAKE) -f includes/poly_onion/CMakeFiles/poly_onion.dir/build.make includes/poly_onion/CMakeFiles/poly_onion.dir/build
+.PHONY : poly_onion/fast
+
+#=============================================================================
+# Target rules for targets named pick
+
+# Build rule for target.
+pick: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 pick
+.PHONY : pick
+
+# fast build rule for target.
+pick/fast:
+	$(MAKE) -f includes/pick/CMakeFiles/pick.dir/build.make includes/pick/CMakeFiles/pick.dir/build
+.PHONY : pick/fast
+
 main.o: main.cpp.o
 
 .PHONY : main.o
@@ -215,6 +267,10 @@ help:
 	@echo "... visibility"
 	@echo "... io_manip"
 	@echo "... poly_incremental"
+	@echo "... poly_from_ch"
+	@echo "... poly_line_algorithms"
+	@echo "... poly_onion"
+	@echo "... pick"
 	@echo "... main.o"
 	@echo "... main.i"
 	@echo "... main.s"

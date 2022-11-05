@@ -5,20 +5,20 @@
 This header file contains an implementation of the poly line from convex hull algorithm
 as discussed in class. 
 
-First we calculate the convex hull and inner points. Then for each edge, we 
-find the closest point. From these pairs of edges and closest points we pick 
-one that the edge is visible from the point. The choise is made at random or from
-min/max area of the adge and closest point.
+    First we calculate the convex hull and inner points. Then for each edge, we 
+    find the closest point. From these pairs of edges and closest points we pick 
+    one that the edge is visible from the point. The choise is made at random or from
+    min/max area of the adge and closest point.
 
-Two visualisation options are provided:
-    - full: at each step we save the points on the poly line, the closest point
-      to each edge and if the edgse is visible from the point
-    - minimal: save only point set and final poly line.
+    Two visualisation options are provided:
+        - full: at each step we save the points on the poly line, the closest point
+        to each edge and if the edgse is visible from the point
+        - minimal: save only point set and final poly line.
 
 The files created can then be used on our Python visualisation app where we can see
 the algorithm run step by step.
 
-Whenver "vis - ..." is used the code concerns visualisation.
+Whenever "vis - ..." is used the code concerns visualisation.
 */
 
 #include "../cgal_config/cgal_config.hpp" // CGAL types

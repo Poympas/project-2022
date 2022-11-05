@@ -1,4 +1,4 @@
-# Install script for directory: /home/users/sdi1800217/Code/Project/ass1/take8
+# Install script for directory: /home/users/sdi1800217/Code/Project/ass1/take10
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -39,22 +39,42 @@ endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/users/sdi1800217/Code/Project/ass1/take8/includes/cgal_config/cmake_install.cmake")
+  include("/home/users/sdi1800217/Code/Project/ass1/take10/includes/cgal_config/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/users/sdi1800217/Code/Project/ass1/take8/includes/visibility/cmake_install.cmake")
+  include("/home/users/sdi1800217/Code/Project/ass1/take10/includes/visibility/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/users/sdi1800217/Code/Project/ass1/take8/includes/io_manip/cmake_install.cmake")
+  include("/home/users/sdi1800217/Code/Project/ass1/take10/includes/io_manip/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/home/users/sdi1800217/Code/Project/ass1/take8/includes/poly_incremental/cmake_install.cmake")
+  include("/home/users/sdi1800217/Code/Project/ass1/take10/includes/poly_incremental/cmake_install.cmake")
+endif()
+
+if(NOT CMAKE_INSTALL_LOCAL_ONLY)
+  # Include the install script for the subdirectory.
+  include("/home/users/sdi1800217/Code/Project/ass1/take10/includes/poly_from_ch/cmake_install.cmake")
+endif()
+
+if(NOT CMAKE_INSTALL_LOCAL_ONLY)
+  # Include the install script for the subdirectory.
+  include("/home/users/sdi1800217/Code/Project/ass1/take10/includes/poly_line_algorithms/cmake_install.cmake")
+endif()
+
+if(NOT CMAKE_INSTALL_LOCAL_ONLY)
+  # Include the install script for the subdirectory.
+  include("/home/users/sdi1800217/Code/Project/ass1/take10/includes/poly_onion/cmake_install.cmake")
+endif()
+
+if(NOT CMAKE_INSTALL_LOCAL_ONLY)
+  # Include the install script for the subdirectory.
+  include("/home/users/sdi1800217/Code/Project/ass1/take10/includes/pick/cmake_install.cmake")
 endif()
 
 if(CMAKE_INSTALL_COMPONENT)
@@ -65,5 +85,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/home/users/sdi1800217/Code/Project/ass1/take8/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/home/users/sdi1800217/Code/Project/ass1/take10/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")

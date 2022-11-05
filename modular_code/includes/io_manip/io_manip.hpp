@@ -22,6 +22,53 @@ namespace io_manip{
     */ 
     void read_data(const std::string& path, Points& points, NUM& ch_area);
 
+
+    /*
+    check and get input from argc, argv
+    general use: ./to_polygon -i <input_file> -o <output_file> -algorithm <algorithm> -edge_selection <edge_selection> -initialization <initialization> -onion_initialization <onion_initialization>
+    check if -i, -o, -algorithm, -edge_selection, -initialisation, -onion_initialization are present 
+    and extract the corresponding values
+    the paramaters do not need to be in that order
+    specific parameters need to be present based on given algorithm
+    */                             
+    void process_input(int argc, 
+                       char** argv, 
+                       std::string& inpout_file,
+                       std::string& output_file,
+                       int& algorithm,
+                       int& edge_selection,
+                       int& init_inc,
+                       int& init_onion,
+                       bool& vis,
+                       bool& vis_min);
+                       
+    /*
+    Creates an output string with the format below:
+        Polygonization
+        <points>
+        <edges>
+        Algorithm: <incremental or convex_hull or onion>_edge_selection<1 or 2 or 3
+                   where applicable>_initialization<incremental and onion options accordingly>
+        area: <area calculated during algorithm>
+        cgal_area: <area calculated from built in cgal function>
+        pick_calculated_area: <pick area (-1 not implemented)>
+        ratio: <poly_area / ch_area>
+        construction time: <milliseconds as integer> 
+    */ 
+    std::string create_output(const Polygon_2& poly_line,
+                              const NUM& poly_area,
+                              const NUM& cgal_poly_area, 
+                              const NUM& pick_area,
+                              const NUM& ch_area,
+                              const double& time,
+                              const int& algorithm,
+                              const int& edge_selection,
+                              const int& init_inc,
+                              const int& init_onion,
+                              const int& simple,
+                              const int& points_count,
+                              const int& points_poly_count);                            
+
     /*
     Functions below use templates so they are defined here in .hpp.
     */

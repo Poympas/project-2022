@@ -64,6 +64,7 @@ void poly_from_ch::run(const Points& points,
     poly_from_ch::edge_selection = edge_selection;  
 
     // vis - save points
+    if(vis || vis_min) mkdir("visualisation",0777);
     if(vis || vis_min) io_manip::save_points_to_file(points,vis_points);
 
     // create poly line - starts as the CH of the points
