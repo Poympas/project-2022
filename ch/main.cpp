@@ -5,7 +5,7 @@
 #include <fstream>                  // std::ifstream
 #include <sstream>                  // std::ifstream
 #include <ctime>                    // for random seed
-
+#include <boost/optional/optional_io.hpp>       // for are_intersecting(...)
 
 // kernel setup
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
@@ -28,17 +28,25 @@ typedef std::vector<Point_2> Points;
 //CORE::BigInt
 typedef int NUM;
 
+
+// CS = Choice Strategy
+enum CS { RANDOM, MIN, MAX };
+
 // find inner points = points - points on CH
-void find_inner_points(const Points& points, const Points& CH, Points& inner_points) {
+template <typename Point_container> // Points or Polygon_2
+void find_inner_points(const Points& points, const Point_container& CH, Points& inner_points) {
+    // for each point
     for (const Point_2& p:points) {
-        int check=1;
+        bool check=true;
+        // check if it is equal to one of the point on the CH
         for (const Point_2& p_ch:CH) {
             if (p==p_ch) {
-                check=0;
+                check=false;
                 break;
             }
         } 
-        if (check==1)
+        // if not check remains one so add it to inner points
+        if (check)
             inner_points.push_back(p);
     }
 }
@@ -48,6 +56,7 @@ Point_2 point_closest_to_edge(const Segment_2& e,const Points& points) {
     Point_2 closest_point = points[0];
     NUM min_distance = CGAL::squared_distance(e,points[0]); 
 
+    // run through all points and find min distance and point
     for (const Point_2& p:points) {
         NUM distance = CGAL::squared_distance(e,p);
         if ( distance < min_distance ){
@@ -60,21 +69,34 @@ Point_2 point_closest_to_edge(const Segment_2& e,const Points& points) {
 }
 
 // choose index of point - 0: random, 1: min area, 2: max area
-int choose_index(const Points& points,const std::vector<NUM>& areas,int c){
+int choose_index(const Points& points,const std::vector<bool>& visibility,const std::vector<NUM>& areas,CS cs){
+    // only choose from points that are visible from their respective edge
+    std::vector<int> visible_indexes;
+    std::vector<int> visible_areas;
+
+    // select visible indexes and areas
+    for (int i=0; i<visibility.size(); i++) {
+        if (visibility[i]) {
+            visible_indexes.push_back(i);
+            visible_areas.push_back(areas[i]);
+        }
+    }
+
     int i;
-    switch(c) {
-        case 0:
+    switch(cs) {
+        case CS::RANDOM: // random pick
             std::srand(std::time(0));
-            i = std::rand()%points.size();
+            i = std::rand()%visible_indexes.size();
             break;
-        case 1:
-            i = std::distance(std::begin(areas), std::min_element(std::begin(areas), std::end(areas)));
+        case CS::MIN: // min area
+            i = std::distance(std::begin(visible_areas), std::min_element(std::begin(visible_areas), std::end(visible_areas)));
             break;
-        case 2:
-            i = std::distance(std::begin(areas), std::max_element(std::begin(areas), std::end(areas)));
+        case CS::MAX: // max area
+            i = std::distance(std::begin(visible_areas), std::max_element(std::begin(visible_areas), std::end(visible_areas)));
             break;
     }
-    return i;
+
+    return visible_indexes[i];
 }
 
 // read input file from path and extract points and ch_area
@@ -89,7 +111,7 @@ void read_data(const std::string& path, Points& points, NUM& ch_area) {
     {
         // 2nd line has ch_area
         if (i==1) {
-            
+            ch_area = stoi(line.substr(38,line.size()-2-38));
         }
         // starting from the 3d line
         else if (i>=2) {
@@ -110,95 +132,168 @@ void read_data(const std::string& path, Points& points, NUM& ch_area) {
     input_file.close();
 }
 
-// save points to file at path
-void save_points_to_file(const Points& points, const std::string& path){
+// save points to file at path 
+template <typename Point_container> // Points or Polygon_2
+void save_points_to_file(const Point_container& points, const std::string& path){
     std::ofstream outfile(path);
 
-    for (const Point_2& p:points) 
+    for (const Point_2& p:points)
         outfile << p << std::endl;
 
     outfile.close();
 }
 
+// save points to file at path - uses visibility
+template <typename Point_container> // Points or Polygon_2
+void save_points_to_file(const Point_container& points,const std::vector<bool>& visibility, const std::string& path){
+    std::ofstream outfile(path);
+
+    for (int i=0; i<points.size(); i++){
+        if (visibility[i])
+            outfile << points[i] << std::endl;
+        else
+            outfile << "NOT_VISIBLE" << std::endl;
+    } 
+
+    outfile.close();
+}
+
 // print points 
-void print_points(const Points& points) {
+template <typename Point_container> // Points or Polygon_2
+void print_points(const Point_container& points) {
     for (const Point_2& p:points) 
         std::cout << p << std::endl; 
 }
 
+// check if two segments are intersecting
+bool are_intersecting(Segment_2 seg1, Segment_2 seg2) {
+    auto inter = intersection(seg1,seg2);
+
+    // intersection handling
+    if (inter) {
+        // intresection is point
+        if (const Point_2 *p = boost::get<Point_2>(&*inter)){
+            // we dont care if intersection is at the defining points of the edges
+            if (*p==seg1.source() || *p==seg1.target() || *p==seg2.source() || *p==seg2.target())
+                return false;
+            // intersection inside the edges - return true
+            else 
+                return true;
+        } 
+        // intersection is segment - this shouldn't happen - i guess?
+        else {
+            const Segment_2 *s = boost::get<Segment_2>(&*inter);
+            std::cout << "LOOK AT ME!!! - Intersection is segment: " << inter << "\n";
+            return true;
+        }
+    // no intersection return false
+    } else {
+        return false;
+    }
+}
+
+// check if a point is visible from an edge, given a polygon to block visibility
+bool is_visible_p_from_e(const Point_2& point, const Segment_2& edge, const Polygon_2& poly_line) {
+    // suppose edge is visible
+    bool is_visible=true;
+
+    // create e1,e2,e3 - segment from point and edge source, target, midpoint
+    Point_2 p1(edge.source()), p2(edge.target());
+    Segment_2 e1(point,p1), e2(point,p2), e3(point,CGAL::midpoint(edge));
+
+    // for each edge e of poly_line
+    for(const Segment_2& e : poly_line.edges()){
+        // if e is equal to the edge we are checking for visibility -> skip it
+        if (e==edge) continue;
+        // if e1,e2 or e3 is intersecting with e, return false
+        if (are_intersecting(e,e1) || are_intersecting(e,e2) || are_intersecting(e,e3))
+            return false;
+    }
+
+    // e1,e2 and e3 intersect with no edge of the poly -> return true
+    return true;
+}
+
+
 int main() {
-    std::cout<<"AAAAAAA";
+    // should be input
+    std::string path="euro-night-0000500.instance";
+    CS cs = CS::MAX;  // c = 0,1,2 -> random, min, max
+    bool vis=false; // visualisation
+    bool vis_min=true; // minimal visualisation, points and final poly line
 
-    std::string path="euro-night-0000100.instance";
+    // read data from path
     Points points;
-    NUM ch_area;
+    NUM poly_area;
 
-    read_data(path,points,ch_area);
-/*
+    read_data(path,points,poly_area);
+
     // vis - paths for saving
+    int vis_counter=0;
     std::string vis_points="visualisation/points";
-    std::string vis_poly_line="visualisation/vis_poly_line";
-    std::string vis_closest="visualisation/closest";
+    std::string vis_poly_line="visualisation/poly_line_";
+    std::string vis_closest="visualisation/closest_";
 
     // vis - save points
-    save_points_to_file(points,path);
-*/
+    if(vis || vis_min) save_points_to_file(points,vis_points);
 
-    // calculate CH
-    Polygon_2 CHp;
-    Points CH;
-    CGAL::convex_hull_2( points.begin(), points.end(), std::back_inserter(CH) );
+    // create poly line - starts as the CH of the points
+    Polygon_2 poly_line;
+    CGAL::convex_hull_2( points.begin(), points.end(), std::back_inserter(poly_line) );
 
-    // print CH and add point to CHp
-    std::cout<<"\nCH:\n";
-    int j=0;
-    for (auto it=CH.begin(); it!=CH.end(); ++it) {
-        CHp.push_back(*it);
-        std::cout << j++ <<" "<< *it << std::endl;
+    // vis - save poly line
+    if(vis) save_points_to_file(poly_line,vis_poly_line+std::to_string(vis_counter));
+
+    // inwards addition loop
+    int max_reps = points.size()-poly_line.size();
+
+    for (int reps=0; reps<max_reps; reps++) {
+        if(reps%10==0) std::cout<<reps<<std::endl;
+        // find inner points
+        Points inner_points;
+        find_inner_points(points,poly_line,inner_points);
+
+        // for each edge find closest point, if it is visible and area of created triangle
+        Points closest_points;
+        std::vector<NUM> areas;
+        std::vector<bool> visibility;
+
+        for(const Segment_2& e : poly_line.edges()) {
+            // closest point
+            Point_2 closest_point = point_closest_to_edge(e,inner_points);
+            closest_points.push_back(closest_point);
+
+            // triangle area
+            NUM area = Triangle_2(e.source(),e.target(),closest_point).area();
+            areas.push_back(area);
+
+            // visibility check
+            visibility.push_back(is_visible_p_from_e(closest_point,e,poly_line));
+        }
+
+        // vis - save closest points
+        if(vis) save_points_to_file(closest_points,visibility,vis_closest+std::to_string(vis_counter));
+
+        // choose next point to insert - c = 0,1,2 -> random, min, max
+        int chosen_index=choose_index(closest_points,visibility,areas,cs);
+
+        // insert new point in polygon
+        if (poly_line.vertices_begin()+chosen_index == poly_line.vertices_end()) 
+            poly_line.push_back(closest_points[chosen_index]);
+        else
+            poly_line.insert(poly_line.vertices_begin()+chosen_index+1,closest_points[chosen_index]);
+
+        // update area
+        poly_area-=areas[chosen_index];
+
+        // vis - increase vis_counter and save new poly line
+        if(vis) vis_counter++;
+        if(vis) save_points_to_file(poly_line,vis_poly_line+std::to_string(vis_counter));
     }
 
-    // print area of CH
-    std::cout << std::fixed <<"area = "<< CHp.area() << std::endl;
-
-    // find inner points
-    Points inner_points;
-
-    find_inner_points(points,CH,inner_points);
-
-    std::cout << "points: " << points.size() << ", CH: " << CH.size() << ", inner: " << inner_points.size() << std::endl;
-
-    Points closest_points;
-    std::vector<NUM> areas;
-
-    // find closest point to each edge and area of created triangle
-    for(const Segment_2& e : CHp.edges()) {
-        Point_2 closest_point = point_closest_to_edge(e,inner_points);
-        NUM area = Triangle_2(e.source(),e.target(),closest_point).area();
-        areas.push_back(area);
-        closest_points.push_back(closest_point);
-    }
-
-    // print closest points and areas
-    std::cout<<"Closest Points:\n";
-    for (int i=0; i<closest_points.size(); i++)
-        std::cout << i << " " << closest_points[i] << " " << areas[i] << std::endl; 
-
-    int chosen_index=choose_index(closest_points,areas,2);
-    std::cout << choose_index(closest_points,areas,0) << std::endl; 
-    std::cout << choose_index(closest_points,areas,1) << std::endl; 
-    std::cout << choose_index(closest_points,areas,2) << std::endl; 
-
-    // insert new point in polygon
-    CHp.insert(CHp.vertices_begin()+chosen_index+1,closest_points[chosen_index]);
-    if (CHp.vertices_begin()+chosen_index == CHp.vertices_end()) 
-        CHp.push_back(closest_points[chosen_index]);
-    else
-        CHp.insert(CHp.vertices_begin()+chosen_index+1,closest_points[chosen_index]);
-
-    // print new polygon
-    std::cout<<"\nCH:\n";
-    for (auto it=CHp.begin(); it!=CHp.end(); ++it) 
-        std::cout << *it << std::endl;
-
+    // vis - save final poly line points
+    std::cout<<poly_line.is_simple()<<std::endl;
+    if(vis_min) save_points_to_file(poly_line,vis_poly_line);
 }
+
 
