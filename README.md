@@ -6,7 +6,7 @@ Department of Informatics and Telecommunications
  
 Authors:								            
 
-PSYCHARIS EVANGELOS 1115201800217					                DR.EMIRIS
+PSYCHARIS EVANGELOS 1115201800217
 SKORDAS CHARISIS 1115201900342
 
 Supervisor:
