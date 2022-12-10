@@ -48,12 +48,6 @@ class poly_from_ch {
         static std::string vis_closest;   // saves points on poly line, visible from next point
 
         /*
-        Would be better named difference, as the function, given two sets of points (points and outter), returns
-        the points that belong to points and not to CH.
-        */
-        static void find_inner_points(const Points& points, const Polygon_2& outter, Points& inner_points);
-
-        /*
         Given an edge and a set of points, find the point closest to the edge and its index.
         */
         static void point_closest_to_edge(const Segment_2& e,const Points& points, Point_2& closest_point);

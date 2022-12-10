@@ -52,11 +52,11 @@ class poly_incremental {
         index of last point inserted, calculates the new poly line and ch from adding the next point.
         Also updates last_point_i to the index of the new last point and updates the area of the poy line.
         */
-        static void bb_inc_step(const Point_2& next_point,
-                                Polygon_2& ch_bb,
-                                Polygon_2& poly_line,
-                                int& last_point_i,
-                                NUM& poly_area);
+        static int bb_inc_step(const Point_2& next_point,
+                               Polygon_2& ch_bb,
+                               Polygon_2& poly_line,
+                               int& last_point_i,
+                               NUM& poly_area);
 
     public:
         /*

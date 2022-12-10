@@ -23,12 +23,12 @@ Runs a step of the algorithm. Given next_point, current poly line, ch and
 index of last point inserted, calculates the new poly line and ch from adding the next point.
 Also updates last_point_i to the index of the new last point and updates the area of the poy line.
 */
-void poly_incremental::bb_inc_step(const Point_2& next_point,
+int poly_incremental::bb_inc_step(const Point_2& next_point,
                                    Polygon_2& ch_bb,
                                    Polygon_2& poly_line,
                                    int& last_point_i,
                                    NUM& poly_area){
-        
+   
     // get size of ch_bb
     int size=ch_bb.size();
 
@@ -59,12 +59,13 @@ void poly_incremental::bb_inc_step(const Point_2& next_point,
 
     // vis - save visible points on ch
     if(vis) {
-        int visible_points_count=right_i-left_i+1;
         Points visible_points;
-        for(int i=0;i<visible_points_count;i++){
-            int index=(left_i+i)%size;
+        int index = left_i;
+        while(index != right_i){
             visible_points.push_back(ch_bb[index]);
+            index=(index+1)%size;
         }
+        visible_points.push_back(ch_bb[right_i]);
         io_manip::save_points_to_file(visible_points,vis_visible+std::to_string(vis_counter));
     }
 
@@ -99,21 +100,23 @@ void poly_incremental::bb_inc_step(const Point_2& next_point,
     for(const Segment_2& edge:edges) {
         NUM area = CGAL::abs(Triangle_2(edge.source(),edge.target(),next_point).area());
         areas.push_back(area);
-        visibility_vec.push_back(visibility::is_visible_p_from_e(next_point,edge,poly_line));
+        // only red edges could possibly block visibility
+        visibility_vec.push_back(visibility::is_visible_p_from_e(next_point,edge,edges));
+        //visibility_vec.push_back(visibility::is_visible_p_from_e(next_point,edge,poly_line));
     }
+
 
     // choose next index to insert - edge_selection = 1,2,3 -> random, min, max
     int chosen_index=visibility::choose_index(visibility_vec,areas,edge_selection);
 
-    // find acctual index on poly_line
-    int poly_index=(poly_left_i+chosen_index)%poly_line.size();
+    // if chosen_index is -1, there is no visible to red edge to be selected - return -1
+    if (chosen_index==-1) return -1;
 
+    // find acctual index on poly_line
+    int poly_index=(poly_left_i+chosen_index+1)%poly_line.size();
     // insert next point in poly_line
-    if (poly_line.vertices_begin()+poly_index == poly_line.vertices_end()) 
-        poly_line.push_back(next_point);
-    else
-        poly_line.insert(poly_line.vertices_begin()+poly_index+1,next_point);
-    
+    poly_line.insert(poly_line.vertices_begin()+poly_index,next_point);
+
     // update area
     poly_area+=areas[chosen_index];
     
@@ -127,16 +130,20 @@ void poly_incremental::bb_inc_step(const Point_2& next_point,
     */  
 
     // remove points from ch
-    int remove_count=right_i-left_i-1;
-    int index;
+    int remove_count=right_i-left_i;
+    if (remove_count<0) remove_count+=size;
+    remove_count--;
+    int erase_pos=left_i;
+    int new_size=size;
     for(int reps=0;reps<remove_count;reps++) {
-        index=(left_i+1)%ch_bb.size(); 
-        ch_bb.erase(ch_bb.begin()+index);
+        ch_bb.erase(ch_bb.begin()+(erase_pos+1)%new_size);
+        if ((erase_pos+1)%new_size < erase_pos) erase_pos--;
+        new_size--;
     }
 
     // and add new point to ch
-    index=(left_i+1)%ch_bb.size(); 
-    ch_bb.insert(ch_bb.begin()+index,next_point);
+    int insert_index=(erase_pos+1)%new_size; 
+    ch_bb.insert(ch_bb.vertices_begin()+insert_index,next_point);
 
     // vis - increase vis_counter and save new ch
     if(vis) vis_counter++;
@@ -144,7 +151,9 @@ void poly_incremental::bb_inc_step(const Point_2& next_point,
     if(vis) io_manip::save_points_to_file(poly_line,vis_poly_line+std::to_string(vis_counter));
 
     // set last_point_i as the index where the last point was inserted at ch
-    last_point_i=index;
+    last_point_i=insert_index;
+
+    return 0;
 }
 
 /*
@@ -163,7 +172,6 @@ void poly_incremental::run(const Points& points,
                            NUM& poly_area,
                            const bool& vis,
                            const bool& vis_min) {
-
     // initialize parameters
     poly_incremental::vis_counter=0;
     poly_incremental::vis=vis; 
@@ -221,15 +229,24 @@ void poly_incremental::run(const Points& points,
     // incremental algorithm loop - one step for each point in rest_of_points
     int max_reps = rest_of_points.size();
     for (int reps=0; reps<max_reps; reps++) {
+        //std::cout<<reps<<"\n";
         // get next point
         Point_2 next_point = rest_of_points[0];      
 
         // calculate next poly_line, ch, last added point, poly area
+        if(
         bb_inc_step(next_point,
                     ch_bb,
                     poly_line,
                     last_point_i,
-                    poly_area);
+                    poly_area) == -1
+        ) {
+            std::cout << "ERROR - NO VISIBLE POINT TO ADD.\n";
+            break;
+        }
+
+        //std::cout<<"    "<<poly_line.is_simple()<<"\n";
+        // if (!poly_line.is_simple()) break;
 
         // erase added point
         rest_of_points.erase(rest_of_points.begin());
@@ -239,3 +256,4 @@ void poly_incremental::run(const Points& points,
     if(vis_min) io_manip::save_points_to_file(ch_bb,vis_ch);
     if(vis_min) io_manip::save_points_to_file(poly_line,vis_poly_line);
 }
+

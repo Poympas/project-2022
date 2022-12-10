@@ -8,7 +8,7 @@ return a simple polygonal line passing through all the points.
 Currently contains:
     1 - incremental algorithm
     2 - convex hull algorithm
-    3 - onion algorithm (not yet)
+    3 - onion algorithm
     4 - pick algorithm to calculate area
 
 This is supposed to be the main interface for the project.
@@ -19,8 +19,6 @@ This is supposed to be the main interface for the project.
 #include "../poly_from_ch/poly_from_ch.hpp"         // convex hull algorithm
 #include "../poly_onion/poly_onion.hpp"             // onion algorithm
 #include "../pick/pick.hpp"                         // pick algorithm for area
-
-#include "../visibility/visibility.cpp"             // linking fails without this
 
 namespace poly_line_algorithms {
     

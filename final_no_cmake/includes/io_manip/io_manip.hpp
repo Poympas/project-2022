@@ -25,20 +25,36 @@ namespace io_manip{
 
     /*
     check and get input from argc, argv
-    general use: ./to_polygon -i <input_file> -o <output_file> -algorithm <algorithm> -edge_selection <edge_selection> -initialization <initialization> -onion_initialization <onion_initialization>
-    check if -i, -o, -algorithm, -edge_selection, -initialisation, -onion_initialization are present 
+    general use: 
+        ./to_polygon -i                      <input_file> 
+                     -o                      <output_file> 
+                     -algorithm              <poly_algorithm> 
+                     -edge_selection         <edge_selection> 
+                     -initialization         <inc_init> 
+                     -onion_initialization   <onion_init>
+                     -opt_alg                <opt_algorithm>
+                     -minmax                 <optimiation_algorithm>
+                     -L                      <local - num points, sim_an - num steps>
+                     -threshold              <threshold for local>
+                     -lgs                    <local global or subdiv sim an>                     
+    check if -i, -o, -algorithm, -edge_selection, -initialisation, -onion_initialization and others are present 
     and extract the corresponding values
     the paramaters do not need to be in that order
-    specific parameters need to be present based on given algorithm
+    specific parameters need to be present based on given algorithms
     */                             
     void process_input(int argc, 
                        char** argv, 
-                       std::string& inpout_file,
+                       std::string& input_file,
                        std::string& output_file,
                        int& algorithm,
                        int& edge_selection,
                        int& init_inc,
                        int& init_onion,
+                       int& opt_algorithm,
+                       int& minmax,
+                       int& LL,
+                       double& threshold,
+                       int& local_global_subdiv,
                        bool& vis,
                        bool& vis_min);
                        
@@ -67,7 +83,19 @@ namespace io_manip{
                               const int& init_onion,
                               const int& simple,
                               const int& points_count,
-                              const int& points_poly_count);                            
+                              const int& points_poly_count,
+                              const Polygon_2& opt_poly_line,
+                              const NUM& opt_poly_area, 
+                              const NUM& opt_cgal_poly_area, 
+                              const NUM& opt_pick_area,
+                              const double& opt_run_time, 
+                              const int& opt_algorithm, 
+                              const int& minmax, 
+                              const int& LL, 
+                              const double& threshold,
+                              const int& local_global_subdiv,
+                              const int& opt_simple,
+                              const int& opt_points_poly_count);                            
 
     /*
     Functions below use templates so they are defined here in .hpp.

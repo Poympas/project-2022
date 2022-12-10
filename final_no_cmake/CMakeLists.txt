@@ -53,6 +53,17 @@ list(APPEND EXTRA_LIBS poly_onion)
 
 add_subdirectory(includes/pick)
 list(APPEND EXTRA_LIBS pick)
+
+add_subdirectory(includes/opt_local_search)
+list(APPEND EXTRA_LIBS opt_local_search)
+
+add_subdirectory(includes/opt_algorithms)
+list(APPEND EXTRA_LIBS opt_algorithms)
+
+add_subdirectory(includes/opt_simulated_annealing)
+list(APPEND EXTRA_LIBS opt_simulated_annealing)
+
+
 # include for local package
 
 

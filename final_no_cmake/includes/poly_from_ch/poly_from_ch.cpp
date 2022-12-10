@@ -16,27 +16,6 @@ std::string poly_from_ch::vis_poly_line="visualisation/poly_line_";
 std::string poly_from_ch::vis_closest="visualisation/closest_";
 
 /*
-Would be better named difference, as the function, given two sets of points (points and outter), returns
-the points that belong to points and not to CH.
-*/
-void poly_from_ch::find_inner_points(const Points& points, const Polygon_2& outter, Points& inner_points) {
-    // for each point
-    for (const Point_2& p:points) {
-        bool check=true;
-        // check if it is equal to one of the points on the CH
-        for (const Point_2& p_out:outter) {
-            if (p==p_out) {
-                check=false;
-                break;
-            }
-        } 
-        // if not, check remains true, so add it to inner points
-        if (check)
-            inner_points.push_back(p);
-    }
-}
-
-/*
 Given an edge and a set of points, find the point closest to the edge and its index.
 */
 void poly_from_ch::point_closest_to_edge(const Segment_2& e,const Points& points, Point_2& closest_point) {
@@ -106,7 +85,7 @@ void poly_from_ch::run(const Points& points,
 
     // initialise inner points
     Points inner_points;
-    find_inner_points(points,poly_line,inner_points);
+    visibility::find_inner_points(points,poly_line,inner_points);
 
     // at each iteration the variables below will hold:
     Points closest_points;              // closest point to each edge
@@ -179,3 +158,6 @@ void poly_from_ch::run(const Points& points,
     // vis - save final poly line points
     if(vis_min) io_manip::save_points_to_file(poly_line,vis_poly_line);
 }
+
+
+

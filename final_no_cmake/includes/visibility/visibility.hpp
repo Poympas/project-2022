@@ -11,7 +11,47 @@ if an edge if visible from a point given a polygonal line to block its line of s
 #include <ctime>                    	  // for random seed
 
 namespace visibility {
-    
+
+    /*
+    Would be better named difference, as the function, given two sets of points (points and outter), returns
+    the points that belong to points and not to CH.
+    */
+    static void find_inner_points(const Points& points, const Polygon_2& outter, Points& inner_points) {
+        // for each point
+        for (const Point_2& p:points) {
+            bool check=true;
+            // check if it is equal to one of the points on the CH
+            for (const Point_2& p_out:outter) {
+                if (p==p_out) {
+                    check=false;
+                    break;
+                }
+            } 
+            // if not, check remains true, so add it to inner points
+            if (check)
+                inner_points.push_back(p);
+        }
+    }
+    // same with as above but returns the inner points
+    static Points find_inner_points(const Points& points, const Polygon_2& outter) {
+        Points inner_points;
+        // for each point
+        for (const Point_2& p:points) {
+            bool check=true;
+            // check if it is equal to one of the points on the CH
+            for (const Point_2& p_out:outter) {
+                if (p==p_out) {
+                    check=false;
+                    break;
+                }
+            } 
+            // if not, check remains true, so add it to inner points
+            if (check)
+                inner_points.push_back(p);
+        }
+        return inner_points;
+    }
+
     /*
     When we want to add an edge or point to the poly line we are concerned:
         - wether it is visible
@@ -43,6 +83,39 @@ namespace visibility {
         - (point,midpoint of edge)
     */ 
     bool is_visible_p_from_e(const Point_2& point, const Segment_2& edge, const Polygon_2& poly_line);
+    // overloaded version to call with edges
+    bool is_visible_p_from_e(const Point_2& point, const Segment_2& edge, const Edges& edges);
+    // overloaded version to call with extra edges and edges to skip
+    bool is_visible_p_from_e(const Point_2& point, const Segment_2& edge, const Polygon_2& poly_line, const Edges& skip_edges, const Edges& extra_edges);
+
+    // assignment 2
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /*
+    Checks if a segment is intersecting with a polygon.
+    */ 
+    bool are_intersecting(const Segment_2& seg_check, const Polygon_2& poly_line);
+
+    /*
+    Checks if two polygons can be connected and return possible bridges
+    */ 
+    bool can_connect_polys_simple(const Polygon_2& poly1, const Polygon_2& poly2, Edges& bridges);
+
+    /*
+    Checks if two polygons can be connected and return possible bridges
+    */ 
+    bool can_connect_polys(const Polygon_2& poly1, const Polygon_2& poly2, Edges& bridges, bool just_one=false);
+
+    /*
+    get a polygon from a starting point to a final point - the long way around
+    */
+    Polygon_2 get_from_to(const Polygon_2& poly, const Point_2& from, const Point_2& to);
+
+    /*
+    connect two polygons at bridge (bridge is from poly 1 to poly 2)
+    */ 
+    Polygon_2 connect_polys_at_bridge(const Polygon_2& poly1, const Polygon_2& poly2, Edges& bridges);
+
 
 }
 
