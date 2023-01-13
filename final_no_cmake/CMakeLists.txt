@@ -63,6 +63,8 @@ list(APPEND EXTRA_LIBS opt_algorithms)
 add_subdirectory(includes/opt_simulated_annealing)
 list(APPEND EXTRA_LIBS opt_simulated_annealing)
 
+add_subdirectory(includes/evaluate_helpers)
+list(APPEND EXTRA_LIBS evaluate_helpers)
 
 # include for local package
 
@@ -71,6 +73,8 @@ list(APPEND EXTRA_LIBS opt_simulated_annealing)
 # ############################
 
 add_executable( to_polygon  main.cpp )
+
+add_executable( evaluate evaluate.cpp )
 
 add_to_cached_list( CGAL_EXECUTABLE_TARGETS to_polygon )
 
